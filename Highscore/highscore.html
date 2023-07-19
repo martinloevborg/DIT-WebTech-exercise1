@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            * { font-family:Arial, Helvetica, sans-serif; }
+            body { background-color : purple; }
+            div { 
+                background-color : white;
+                border: 2px solid black;
+                padding: 10px;
+                margin: 10px;
+                line-height: 1.4;
+            }
+            th, td { padding: 0px 15px; }
+            /* class for right-aligned score column */
+            .right-align { text-align: right; }
+        </style>
+        <script>
+            function clearTable() {
+                let table = document.getElementById("tableelem");
+                let tablehead = table.firstElementChild;
+                table.innerText = '';
+                table.append(tablehead);
+            }
+
+            async function loadHighscores() {
+                let resp = await fetch("http://localhost:8080/highscores");
+                let json = await resp.json();
+
+                clearTable();
+                let table = document.getElementById("tableelem");
+                for (p of json) {
+                    console.log(p);
+                    let rowelem = document.createElement("tr");
+                    let scoreelem = document.createElement("td");
+                    let nameelem = document.createElement("td");
+                    scoreelem.setAttribute("class", "right-align");
+                    scoreelem.innerText = p.score;
+                    nameelem.innerText = p.name;
+                    rowelem.append(scoreelem, nameelem);
+                    table.append(rowelem);
+                }
+            }
+
+            window.addEventListener("load", async _ => {
+                await loadHighscores();
+
+                let submitbutton = document.getElementById("submitbutton");
+                submitbutton.addEventListener("click", async _ => {
+                    let playername = document.getElementById("playername").value;
+                    let newscore = parseInt(document.getElementById("newscore").value);
+
+                    console.log("submitted: ", playername, newscore);
+                    if (playername == "") { alert("Missing player name"); return; }
+                    if (newscore == 0) { alert("Zero points is not a highscore"); return; }
+
+                    fetch("http://localhost:8080/highscore", 
+                          { method : "POST",
+                            headers : { "Content-type": "application/json" },
+                            body : JSON.stringify({ name: playername, score: newscore })})
+                    .then(resp => {
+                        if (resp.status == 201) { console.log("request success"); loadHighscores() }
+                        else console.log("request failed with", resp.status, resp.statusText, resp.body)})
+                    .catch(_ => console.log("request failed"))
+                })
+        })
+        </script>
+    </head>
+    <body>
+        <h1>Highscores</h1>
+        <div>
+            <!--Best players of all time:-->
+            <table id="tableelem">
+                <tr>
+                    <th class="right-align">Score</th><th>Name</th>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            Submit new highscore:
+            <form>
+                <label>Name:</label>  <input type="text"   id="playername"> <br/>
+                <label>Score:</label> <input type="number" id="newscore" value="0"> <br/>
+                <input type="button" id="submitbutton" value="Submit">
+            </form>
+        </div>
+    </body>
+</html>

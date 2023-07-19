@@ -1,0 +1,7 @@
+unit test:
+  image: node:latest
+  stage: test
+  script:
+    - echo '951cb6a0457bcba6f0279fbea97f053c4c873190 *test.ts' | sha1sum -c
+    - npm install
+    - ./node_modules/mocha/bin/mocha --timeout 600000 --unhandled-rejections=strict -r ts-node/register test.ts
